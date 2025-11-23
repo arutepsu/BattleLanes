@@ -17,21 +17,31 @@ export interface PlayerState {
   manaRegenPerSecond: number;
   tower: TowerState;
 }
+export type UnitPhase = "walking" | "attackingUnit" | "attackingTower" | "dead";
 
 export interface UnitState {
   id: string;
   heroId: HeroId;
-  side: PlayerSide;     // who owns this unit
+  side: PlayerSide;
   lane: LaneId;
-  x: number;            // 0 = own tower, 1 = enemy tower
+
+  x: number;              // 0..1 along lane
+
   hp: number;
   maxHp: number;
+
+  // Combat stats (copied from hero definition)
   attack: number;
-  range: number;        // fraction of lane (0..1)
-  speed: number;        // lane fraction per second
+  range: number;
+  speed: number;
+
   attackCooldownMs: number;
-  lastAttackAt: number; // timestamp (ms) of last attack
+  lastAttackAt: number;
+
+  // NEW FIELD — REQUIRED!
+  phase: UnitPhase;
 }
+
 
 export interface MatchState {
   id: string;

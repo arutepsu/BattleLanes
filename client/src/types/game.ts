@@ -1,10 +1,33 @@
-// src/types/game.ts
 export type PlayerSide = "left" | "right";
 export type LaneId = 0 | 1 | 2;
 
 export interface TowerState {
   hp: number;
   maxHp: number;
+}
+
+export type UnitPhase = "walking" | "attackingUnit" | "attackingTower" | "dead";
+
+export type HeroId = string;
+
+export interface UnitState {
+  id: string;
+  heroId: HeroId;
+  side: PlayerSide;
+  lane: LaneId;
+  x: number; // 0..1 along lane
+
+  hp: number;
+  maxHp: number;
+
+  // combat stats (copied from hero on spawn or derived)
+  attack: number;
+  range: number;             // in lane units (0..1 space)
+  speed: number;             // units per second along the lane
+  attackCooldownMs: number;
+  lastAttackAt: number;      // timestamp in ms (game time / Date.now)
+
+  phase: UnitPhase;          // what the unit is doing right now
 }
 
 export interface PlayerState {
@@ -15,8 +38,6 @@ export interface PlayerState {
   manaRegenPerSecond: number;
   tower: TowerState;
 }
-
-export type HeroId = string;
 
 export interface UnitState {
   id: string;

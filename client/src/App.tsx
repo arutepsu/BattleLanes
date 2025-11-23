@@ -1,4 +1,3 @@
-// src/App.tsx
 import { useCallback, useEffect, useState } from "react";
 import type {
   MatchState,
@@ -7,21 +6,25 @@ import type {
   PlayerSide,
   LaneId,
   UnitState,
+  AnimConfig,
 } from "./types/game";
 import { fetchHeroes, createMatch, spawnUnit, stepMatch } from "./types/gameApi";
 import "./App.css";
-import { SpriteAnimator } from "./components/SpriteAnimator";
-
+import { DeadSprite, SpriteAnimator } from "./components/SpriteAnimator";
 
 const LANES: LaneId[] = [0, 1, 2];
-const LEFT: PlayerSide = "left";
+
 
 export default function App() {
   const [heroCatalog, setHeroCatalog] = useState<HeroCatalog | null>(null);
   const [match, setMatch] = useState<MatchState | null>(null);
   const [matchId, setMatchId] = useState<string | null>(null);
   const [selectedHeroId, setSelectedHeroId] = useState<HeroId | null>(null);
+
   const [isRunning, setIsRunning] = useState(true);
+
+  // 👇 NEW: which player is currently spawning units
+  const [activeSide, setActiveSide] = useState<PlayerSide>("left");
 
   // Load heroes + create match on mount
   useEffect(() => {
@@ -70,13 +73,14 @@ export default function App() {
     async (lane: LaneId) => {
       if (!matchId || !selectedHeroId) return;
       try {
-        const res = await spawnUnit(matchId, LEFT, lane, selectedHeroId);
+        // 👇 use activeSide instead of always LEFT
+        const res = await spawnUnit(matchId, activeSide, lane, selectedHeroId);
         setMatch(res.state);
       } catch (err) {
         console.error("Spawn error:", err);
       }
     },
-    [matchId, selectedHeroId]
+    [matchId, selectedHeroId, activeSide]
   );
 
   if (
@@ -102,6 +106,9 @@ export default function App() {
         <ManaBar match={match} side="right" />
       </div>
 
+      {/* 👇 NEW: side selector for spawns */}
+      <SpawnSideToggle activeSide={activeSide} onChange={setActiveSide} />
+
       <HeroBar
         heroCatalog={heroCatalog}
         selectedHeroId={selectedHeroId}
@@ -116,6 +123,32 @@ export default function App() {
     </div>
   );
 }
+function SpawnSideToggle({
+  activeSide,
+  onChange,
+}: {
+  activeSide: PlayerSide;
+  onChange: (side: PlayerSide) => void;
+}) {
+  return (
+    <div className="spawn-toggle">
+      <span>Spawning for:&nbsp;</span>
+      <button
+        className={activeSide === "left" ? "spawn-btn spawn-btn--active" : "spawn-btn"}
+        onClick={() => onChange("left")}
+      >
+        Left
+      </button>
+      <button
+        className={activeSide === "right" ? "spawn-btn spawn-btn--active" : "spawn-btn"}
+        onClick={() => onChange("right")}
+      >
+        Right
+      </button>
+    </div>
+  );
+}
+
 
 // ----------------- Small components -----------------
 
@@ -214,6 +247,8 @@ function GameBoard({
     </div>
   );
 }
+type DerivedAnimState = "walk" | "attack" | "dead";
+
 
 function LaneView({
   lane,
@@ -235,19 +270,36 @@ function LaneView({
 
   return (
     <div className="lane" onClick={onClick}>
-      {unitsOnLane.map((u) => (
-        <UnitView key={u.id} unit={u} heroCatalog={heroCatalog} />
-      ))}
+      {unitsOnLane.map((u) => {
+      const animState: DerivedAnimState =
+        u.hp <= 0 || u.phase === "dead"
+          ? "dead"
+          : u.phase === "attackingUnit" || u.phase === "attackingTower"
+          ? "attack"
+          : "walk";
+
+        return (
+          <UnitView
+            key={u.id}
+            unit={u}
+            heroCatalog={heroCatalog}
+            animState={animState}
+          />
+        );
+      })}
     </div>
   );
 }
 
+
 function UnitView({
   unit,
   heroCatalog,
+  animState,
 }: {
   unit: UnitState;
   heroCatalog: HeroCatalog;
+  animState: DerivedAnimState;
 }) {
   const hero = heroCatalog[unit.heroId];
   if (!hero) {
@@ -255,15 +307,58 @@ function UnitView({
     return null;
   }
 
-  const animations = hero.animations;
-  // For now: always use walk animation when unit is alive.
-  // Later: switch between idle/walk/attack/hit/dead based on events.
-  const walkAnim = animations.walk ?? animations.idle;
+  const a = hero.animations;
   const flip = unit.side === "right";
+  const xPercent = unit.x * 100;
+  const hpRatio = unit.maxHp > 0 ? unit.hp / unit.maxHp : 0;
 
-  // lane is horizontal: x in [0,1] → % in CSS
-  const xPercent = unit.side === "left" ? unit.x * 100 : (1 - unit.x) * 100;
-  const hpRatio = unit.hp / unit.maxHp;
+  // 🔥 DEAD: use DeadSprite (static last frame)
+  if (animState === "dead") {
+    const deadCandidate = a.dead ?? a.idle ?? a.walk;
+    const deadAnim = toSingleAnim(deadCandidate);
+    if (!deadAnim) {
+      console.warn("UnitView: no dead animation for", unit.heroId);
+      return null;
+    }
+
+    console.log("DEAD anim config for", unit.heroId, {
+      src: deadAnim.spriteSheetSrc,
+      totalFrames: deadAnim.totalFrames,
+      startFrame: deadAnim.startFrame,
+      loop: deadAnim.loop,
+    });
+
+    return (
+      <div
+        className="unit"
+        style={{
+          left: `${xPercent}%`,
+        }}
+      >
+        <DeadSprite anim={deadAnim} flip={flip} />
+        <div className="unit-hpbar">
+          <div
+            className="unit-hpfill"
+            style={{ width: `${hpRatio * 100}%` }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ WALK / ATTACK: still use SpriteAnimator
+  let candidate: AnimConfig | AnimConfig[] | undefined;
+  if (animState === "attack") {
+    candidate = a.attack ?? a.walk ?? a.idle;
+  } else {
+    candidate = a.walk ?? a.idle;
+  }
+
+  const anim = toSingleAnim(candidate);
+  if (!anim) {
+    console.warn("UnitView: no animation found for", unit.heroId, animState);
+    return null;
+  }
 
   return (
     <div
@@ -272,11 +367,20 @@ function UnitView({
         left: `${xPercent}%`,
       }}
     >
-      <SpriteAnimator anim={walkAnim} flip={flip} />
-
+      <SpriteAnimator anim={anim} flip={flip} />
       <div className="unit-hpbar">
-        <div className="unit-hpfill" style={{ width: `${hpRatio * 100}%` }} />
+        <div
+          className="unit-hpfill"
+          style={{ width: `${hpRatio * 100}%` }}
+        />
       </div>
     </div>
   );
+}
+
+function toSingleAnim(
+  cfg?: AnimConfig | AnimConfig[] | null
+): AnimConfig | null {
+  if (!cfg) return null;
+  return Array.isArray(cfg) ? cfg[0] : cfg;
 }

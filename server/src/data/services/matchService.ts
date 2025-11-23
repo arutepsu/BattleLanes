@@ -2,8 +2,7 @@
 import { MatchState, PlayerSide, LaneId, UnitState, StepResult, GameEvent } from "../domain/models/GameTypes";
 import {HERO_CATALOG, HeroId } from "../domain/models/HeroCatalog";
 import crypto from "crypto";
-// In-memory storage for now
-// src/services/matchService.ts
+
 
 // In-memory matches
 const matches = new Map<string, MatchState>();
@@ -18,7 +17,7 @@ function nowMs(): number {
 }
 
 function baseTower(): { hp: number; maxHp: number } {
-  return { hp: 500, maxHp: 500 };
+  return { hp: 5000, maxHp: 5000 };
 }
 
 // ----------------- Match creation & access -----------------
@@ -27,32 +26,31 @@ function createMatch(leftPlayerId: string, rightPlayerId: string): MatchState {
   const id = crypto.randomUUID();
   const now = nowMs();
 
-    const match: MatchState = {
+  const match: MatchState = {
     id,
     createdAt: now,
     lastUpdatedAt: now,
     players: {
-        left: {
+      left: {
         id: leftPlayerId,
         side: "left",
         mana: 3,
         maxMana: 10,
         manaRegenPerSecond: 1,
-        tower: { hp: 500, maxHp: 500 },
-        },
-        right: {
+        tower: baseTower(),
+      },
+      right: {
         id: rightPlayerId,
         side: "right",
         mana: 3,
         maxMana: 10,
         manaRegenPerSecond: 1,
-        tower: { hp: 500, maxHp: 500 },
-        },
+        tower: baseTower(),
+      },
     },
     units: [], // always an array, even if empty
     isFinished: false,
-    };
-
+  };
 
   matches.set(id, match);
   return match;
@@ -87,7 +85,7 @@ function spawnUnit(
   // - lane is [0,1]
   // - hero.range (1..4-ish) → fraction of lane
   // - hero.speed (15..30-ish) → fraction of lane per second
-  const RANGE_SCALE = 0.1;   // 0.1 lane per "range point"
+  const RANGE_SCALE = 0.1; // 0.1 lane per "range point"
   const SPEED_SCALE = 1 / 100; // hero.speed 25 → 0.25 lane/sec
 
   const unit: UnitState = {
@@ -96,6 +94,8 @@ function spawnUnit(
     side: playerSide,
     lane,
     x: playerSide === "left" ? TOWER_POSITION_LEFT : TOWER_POSITION_RIGHT,
+
+    // HP + combat stats from hero
     hp: hero.maxHp,
     maxHp: hero.maxHp,
     attack: hero.attack,
@@ -103,6 +103,9 @@ function spawnUnit(
     speed: hero.speed * SPEED_SCALE,
     attackCooldownMs: hero.attackCooldownMs,
     lastAttackAt: 0,
+
+    // 👇 NEW: start by walking
+    phase: "walking",
   };
 
   match.units.push(unit);
@@ -130,6 +133,8 @@ function findEnemyInRange(unit: UnitState, enemies: UnitState[]): UnitState | un
 
   for (const e of enemies) {
     if (e.lane !== unit.lane) continue;
+    if (e.hp <= 0) continue;
+
     const dist = unitDistance(unit, e);
     if (dist <= unit.range && dist < bestDist) {
       best = e;
@@ -162,10 +167,53 @@ function stepMatch(match: MatchState, deltaMs: number): StepResult {
     p.mana = Math.min(p.maxMana, p.mana + p.manaRegenPerSecond * deltaSec);
   });
 
-  // 2) movement
+  // Pre-split units by side (live references, we mutate in place)
+  const leftUnits = match.units.filter((u) => u.side === "left");
+  const rightUnits = match.units.filter((u) => u.side === "right");
+
+  // 2) PHASE ASSIGNMENT: decide what each unit is doing this tick
   for (const unit of match.units) {
+    if (unit.hp <= 0) {
+      unit.phase = "dead";
+      continue;
+    }
+
+    // default: walking
+    unit.phase = "walking";
+
+    const enemySide = oppositeSide(unit.side);
+    const enemies = enemySide === "left" ? leftUnits : rightUnits;
+
+    // 2a) is an enemy unit in range?
+    const enemyInRange = findEnemyInRange(unit, enemies);
+
+    if (enemyInRange) {
+      unit.phase = "attackingUnit";
+      continue;
+    }
+
+    // 2b) else: is enemy tower in range?
+    const enemyTower = match.players[enemySide].tower;
+    if (enemyTower.hp > 0) {
+      const enemyTowerPos = towerX(enemySide);
+      const distToTower = Math.abs(unit.x - enemyTowerPos);
+
+      if (distToTower <= unit.range) {
+        unit.phase = "attackingTower";
+        continue;
+      }
+    }
+  }
+
+  // 3) MOVEMENT: only units that are NOT attacking move
+  for (const unit of match.units) {
+    if (unit.hp <= 0) continue;
+    if (unit.phase === "attackingUnit" || unit.phase === "attackingTower") {
+      // stop while fighting (unit vs unit or unit vs tower)
+      continue;
+    }
+
     const direction = unit.side === "left" ? +1 : -1;
-    // speed is lane fraction per second -> multiply by deltaSec
     unit.x += direction * unit.speed * deltaSec;
 
     // clamp to [0,1]
@@ -173,91 +221,86 @@ function stepMatch(match: MatchState, deltaMs: number): StepResult {
     if (unit.x > 1) unit.x = 1;
   }
 
-  // 3) combat
-  const leftUnits = match.units.filter((u) => u.side === "left");
-  const rightUnits = match.units.filter((u) => u.side === "right");
-
+  // 4) COMBAT: apply damage based on phase + cooldown
   const deadUnitIds = new Set<string>();
 
   for (const unit of match.units) {
-    if (deadUnitIds.has(unit.id)) continue;
+    if (unit.hp <= 0) continue; // dead
+    if (!canAttack(now, unit)) continue;
 
     const enemySide = oppositeSide(unit.side);
     const enemies = enemySide === "left" ? leftUnits : rightUnits;
 
-    if (!canAttack(now, unit)) {
-      continue;
-    }
+    // 4a) unit vs unit
+    if (unit.phase === "attackingUnit") {
+      const enemyInRange = findEnemyInRange(unit, enemies);
+      if (enemyInRange && enemyInRange.hp > 0) {
+        enemyInRange.hp -= unit.attack;
+        unit.lastAttackAt = now;
 
-    // 3a) try enemy units
-    const enemyInRange = findEnemyInRange(unit, enemies);
-
-    if (enemyInRange) {
-      enemyInRange.hp -= unit.attack;
-      unit.lastAttackAt = now;
-
-      events.push({
-        type: "unitDamaged",
-        unitId: enemyInRange.id,
-        heroId: enemyInRange.heroId,
-        lane: enemyInRange.lane,
-        side: enemyInRange.side,
-        amount: unit.attack,
-        hpAfter: Math.max(0, enemyInRange.hp),
-      });
-
-      if (enemyInRange.hp <= 0) {
-        deadUnitIds.add(enemyInRange.id);
         events.push({
-          type: "unitDied",
+          type: "unitDamaged",
           unitId: enemyInRange.id,
           heroId: enemyInRange.heroId,
           lane: enemyInRange.lane,
           side: enemyInRange.side,
+          amount: unit.attack,
+          hpAfter: Math.max(0, enemyInRange.hp),
         });
-      }
 
-      continue;
+        if (enemyInRange.hp <= 0) {
+          deadUnitIds.add(enemyInRange.id);
+          enemyInRange.phase = "dead";
+          events.push({
+            type: "unitDied",
+            unitId: enemyInRange.id,
+            heroId: enemyInRange.heroId,
+            lane: enemyInRange.lane,
+            side: enemyInRange.side,
+          });
+        }
+
+        continue;
+      }
     }
 
-    // 3b) try enemy tower
-    const enemyTower = match.players[enemySide].tower;
-    const enemyTowerPos = towerX(enemySide);
-    const distToTower = Math.abs(unit.x - enemyTowerPos);
+    // 4b) unit vs tower
+    if (unit.phase === "attackingTower") {
+      const enemyTower = match.players[enemySide].tower;
+      if (enemyTower.hp <= 0) continue;
 
-    if (distToTower <= unit.range && enemyTower.hp > 0) {
-      enemyTower.hp -= unit.attack;
-      if (enemyTower.hp < 0) enemyTower.hp = 0;
-      unit.lastAttackAt = now;
+      const enemyTowerPos = towerX(enemySide);
+      const distToTower = Math.abs(unit.x - enemyTowerPos);
 
-      events.push({
-        type: "towerDamaged",
-        towerSide: enemySide,
-        amount: unit.attack,
-        hpAfter: enemyTower.hp,
-      });
-
-      if (enemyTower.hp <= 0) {
-        match.isFinished = true;
-        match.winnerSide = unit.side;
+      if (distToTower <= unit.range) {
+        enemyTower.hp -= unit.attack;
+        if (enemyTower.hp < 0) enemyTower.hp = 0;
+        unit.lastAttackAt = now;
 
         events.push({
-          type: "towerDestroyed",
+          type: "towerDamaged",
           towerSide: enemySide,
-          winnerSide: unit.side,
+          amount: unit.attack,
+          hpAfter: enemyTower.hp,
         });
 
-        events.push({
-          type: "matchFinished",
-          winnerSide: unit.side,
-        });
+        if (enemyTower.hp <= 0 && !match.isFinished) {
+          match.isFinished = true;
+          match.winnerSide = unit.side;
+
+          events.push({
+            type: "towerDestroyed",
+            towerSide: enemySide,
+            winnerSide: unit.side,
+          });
+
+          events.push({
+            type: "matchFinished",
+            winnerSide: unit.side,
+          });
+        }
       }
     }
-  }
-
-  // 4) remove dead units
-  if (deadUnitIds.size > 0) {
-    match.units = match.units.filter((u) => !deadUnitIds.has(u.id));
   }
 
   match.lastUpdatedAt = now;

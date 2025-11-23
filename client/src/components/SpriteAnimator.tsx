@@ -13,78 +13,171 @@ export function SpriteAnimator({
   flip = false,
 }: SpriteAnimatorProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const frameRef = useRef(0);
-  const lastTimeRef = useRef<number | null>(null);
-  const requestRef = useRef<number | null>(null);
-  const loadedRef = useRef(false);
 
   useEffect(() => {
-    const rawCanvas = canvasRef.current;
-    if (!rawCanvas) return;
-    const canvas: HTMLCanvasElement = rawCanvas;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const rawCtx = canvas.getContext("2d");
-    if (!rawCtx) return;
-    const ctx: CanvasRenderingContext2D = rawCtx;
+    const cnv: HTMLCanvasElement = canvas;
+    const context = cnv.getContext("2d");
+    if (!context) return;
+    const ctx: CanvasRenderingContext2D = context;
 
-    const img = new Image();
-    img.src = anim.spriteSheetSrc; // <- now a clean "/sprites/...".
-    imgRef.current = img;
-    loadedRef.current = false;
+    const sprite = new Image();
+    sprite.src = anim.spriteSheetSrc;
 
     const frameWidth = anim.frameWidth;
     const frameHeight = anim.frameHeight;
-    const totalFrames = anim.totalFrames;
-    const fps = anim.fps || 8;
+    const framesPerRow = anim.framesPerRow;
+    const frameCount = anim.totalFrames;
+    const firstFrame = anim.startFrame ?? 0;
+    const lastFrame = firstFrame + frameCount - 1;
+
+    const fps = anim.fps || 10;
     const frameDuration = 1000 / fps;
     const scale = anim.scale || 1;
+    const loop = anim.loop ?? true;
+    const backgroundColor = anim.backgroundColor;
 
-    const scaledWidth = frameWidth * scale;
-    const scaledHeight = frameHeight * scale;
-    canvas.width = scaledWidth;
-    canvas.height = scaledHeight;
+    // size canvas
+    const dw = frameWidth * scale;
+    const dh = frameHeight * scale;
+    cnv.width = dw;
+    cnv.height = dh;
 
-    frameRef.current = anim.startFrame ?? 0;
-    lastTimeRef.current = null;
+    let currentFrame = firstFrame;
+    let lastTime = 0;
+    let playingInternal = true;
+    let rafId: number | null = null;
 
-    function draw(timestamp: number) {
-      if (!playing) {
-        requestRef.current = requestAnimationFrame(draw);
-        return;
-      }
+    function drawFrame() {
+      const col = currentFrame % framesPerRow;
+      const row = Math.floor(currentFrame / framesPerRow);
 
-      if (!loadedRef.current || !img.complete || img.naturalWidth === 0) {
-        requestRef.current = requestAnimationFrame(draw);
-        return;
-      }
-
-      if (lastTimeRef.current === null) {
-        lastTimeRef.current = timestamp;
-      }
-
-      const elapsed = timestamp - lastTimeRef.current;
-
-      if (elapsed >= frameDuration) {
-        lastTimeRef.current = timestamp;
-        frameRef.current++;
-
-        if (frameRef.current >= totalFrames) {
-          frameRef.current = anim.loop ? 0 : totalFrames - 1;
-        }
-      }
-
-      const currentFrame = frameRef.current;
-      const col = currentFrame % anim.framesPerRow;
-      const row = Math.floor(currentFrame / anim.framesPerRow);
       const sx = col * frameWidth;
       const sy = row * frameHeight;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, cnv.width, cnv.height);
+
+      if (backgroundColor) {
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, cnv.width, cnv.height);
+      }
 
       ctx.save();
       if (flip) {
-        ctx.translate(canvas.width, 0);
+        ctx.translate(cnv.width, 0);
+        ctx.scale(-1, 1);
+      }
+
+      ctx.drawImage(
+        sprite,
+        sx,
+        sy,
+        frameWidth,
+        frameHeight,
+        0,
+        0,
+        dw,
+        dh
+      );
+
+      ctx.restore();
+    }
+
+    function loopFn(timestamp: number) {
+      if (!playingInternal) return;
+
+      if (!lastTime) lastTime = timestamp;
+      const delta = timestamp - lastTime;
+
+      if (delta >= frameDuration && playing) {
+        lastTime = timestamp;
+        currentFrame++;
+
+        if (currentFrame > lastFrame) {
+          if (loop) {
+            // loop within [firstFrame, lastFrame]
+            currentFrame = firstFrame;
+          } else {
+            // stay on last frame and stop
+            currentFrame = lastFrame;
+            playingInternal = false;
+            drawFrame();
+            return;
+          }
+        }
+      }
+
+      drawFrame();
+      rafId = requestAnimationFrame(loopFn);
+    }
+
+    sprite.onload = () => {
+      playingInternal = true;
+      rafId = requestAnimationFrame(loopFn);
+    };
+
+    sprite.onerror = (e) => {
+      console.error("Failed to load sprite image:", anim.spriteSheetSrc, e);
+    };
+
+    return () => {
+      playingInternal = false;
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+    };
+  }, [anim, flip, playing]);
+
+  return <canvas ref={canvasRef} />;
+}
+
+export function DeadSprite({
+  anim,
+  flip = false,
+}: {
+  anim: AnimConfig;
+  flip?: boolean;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const cnv: HTMLCanvasElement = canvas;
+    const context = cnv.getContext("2d");
+    if (!context) return;
+    const ctx: CanvasRenderingContext2D = context;
+
+    const img = new Image();
+    img.src = anim.spriteSheetSrc;
+
+    const frameWidth = anim.frameWidth;
+    const frameHeight = anim.frameHeight;
+    const framesPerRow = anim.framesPerRow;
+    const frameCount = anim.totalFrames;
+    const firstFrame = anim.startFrame ?? 0;
+    const lastFrame = firstFrame + frameCount - 1;
+
+    const scale = anim.scale || 1;
+    const dw = frameWidth * scale;
+    const dh = frameHeight * scale;
+    cnv.width = dw;
+    cnv.height = dh;
+
+    img.onload = () => {
+      const col = lastFrame % framesPerRow;
+      const row = Math.floor(lastFrame / framesPerRow);
+      const sx = col * frameWidth;
+      const sy = row * frameHeight;
+
+      ctx.clearRect(0, 0, cnv.width, cnv.height);
+
+      ctx.save();
+      if (flip) {
+        ctx.translate(cnv.width, 0);
         ctx.scale(-1, 1);
       }
 
@@ -96,30 +189,17 @@ export function SpriteAnimator({
         frameHeight,
         0,
         0,
-        scaledWidth,
-        scaledHeight
+        dw,
+        dh
       );
 
       ctx.restore();
-
-      requestRef.current = requestAnimationFrame(draw);
-    }
-
-    img.onload = () => {
-      loadedRef.current = true;
-      requestRef.current = requestAnimationFrame(draw);
     };
 
     img.onerror = (e) => {
-      console.error("Failed to load sprite image:", anim.spriteSheetSrc, e);
+      console.error("Failed to load dead sprite:", anim.spriteSheetSrc, e);
     };
-
-    return () => {
-      if (requestRef.current !== null) {
-        cancelAnimationFrame(requestRef.current);
-      }
-    };
-  }, [anim, playing, flip]);
+  }, [anim, flip]);
 
   return <canvas ref={canvasRef} />;
 }
