@@ -5,7 +5,7 @@ export default async function (app: FastifyInstance) {
   app.get("/battle", { websocket: true }, (connection, req) => {
     console.log("Player connected!");
 
-    connection.socket.on("message", (message) => {
+    connection.socket.on("message", (message: { toString: () => string; }) => {
       const data = JSON.parse(message.toString());
 
       if (data.type === "join") {

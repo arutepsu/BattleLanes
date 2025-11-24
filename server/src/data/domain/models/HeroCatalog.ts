@@ -100,7 +100,7 @@ export const HERO_CATALOG: HeroCatalog = {
         makeAnim('samurai', 'attack1', 200, 200, 4, 4, 12, 2),
       ],
       hit:    makeAnim('samurai', 'hit',    200, 200, 3, 3, 10, 2),
-      dead:   makeAnim('samurai', 'dead',   200, 200, 7, 7,  8, 2, false),
+      dead:   makeAnim('samurai', 'dead',   200, 200, 7, 7,  8, 8, false),
     },
   },
 
@@ -116,7 +116,11 @@ export const HERO_CATALOG: HeroCatalog = {
     animations: {
       idle:   makeAnim('warrior', 'idle',   162, 162, 10, 10, 8),
       walk:   makeAnim('warrior', 'run',    162, 162, 8, 8, 10),
-      attack: makeAnim('warrior', 'attack', 162, 162, 7, 7, 7, 2),
+      attack: [
+        makeAnim('warrior', 'attack', 162, 162, 7, 7, 7, 2),
+        makeAnim('warrior', 'attack1', 162, 162, 7, 7, 7, 2)
+      ]
+      ,
       hit:    makeAnim('warrior', 'hit',    162, 162, 3, 3, 10, 2),
       dead:   makeAnim('warrior', 'dead',   162, 162, 7, 7, 8, 2, false),
     },
@@ -134,7 +138,10 @@ export const HERO_CATALOG: HeroCatalog = {
     animations: {
       idle:   makeAnim('wizard', 'idle',   231, 190, 6, 6, 8),
       walk:   makeAnim('wizard', 'run',    231, 190, 8, 8, 10),
-      attack: makeAnim('wizard', 'attack', 231, 190, 8, 8, 10, 2),
+      attack: [
+        makeAnim('wizard', 'attack', 231, 190, 8, 8, 10, 2),
+        makeAnim('wizard', 'attack1', 231, 190, 8, 8, 10, 2)
+      ],
       hit:    makeAnim('wizard', 'hit',    231, 190, 4, 4, 10, 2),
       dead:   makeAnim('wizard', 'dead',   231, 190, 7, 7, 8, 2, false),
     },
@@ -152,7 +159,10 @@ export const HERO_CATALOG: HeroCatalog = {
     animations: {
       idle:   makeAnim('knight', 'idle',   180, 180, 11, 11, 8),
       walk:   makeAnim('knight', 'run',    180, 180, 8, 8, 10),
-      attack: makeAnim('knight', 'attack', 180, 180, 7, 7, 12, 2),
+      attack: [
+      makeAnim('knight', 'attack', 180, 180, 7, 7, 12, 2),
+      makeAnim('knight', 'attack1',180, 180, 7, 7, 12, 2)
+      ],
       hit:    makeAnim('knight', 'hit',    180, 180, 4, 4, 10, 2),
       dead:   makeAnim('knight', 'dead',   180, 180, 11, 11, 8, 2, false),
     },
@@ -170,7 +180,10 @@ export const HERO_CATALOG: HeroCatalog = {
     animations: {
       idle:   makeAnim('evilWizard', 'idle',   250, 250, 8, 8, 8),
       walk:   makeAnim('evilWizard', 'run',    250, 250, 8, 8, 10),
-      attack: makeAnim('evilWizard', 'attack', 250, 250, 8, 8, 10, 2),
+      attack: [
+        makeAnim('evilWizard', 'attack', 250, 250, 8, 8, 10, 2),
+        makeAnim('evilWizard', 'attack1',250, 250, 8, 8, 10, 2),
+      ],
       hit:    makeAnim('evilWizard', 'hit',    250, 250, 3, 3, 10, 2),
       dead:   makeAnim('evilWizard', 'dead',   250, 250, 7, 7, 8, 2, false),
     },
@@ -188,7 +201,11 @@ export const HERO_CATALOG: HeroCatalog = {
     animations: {
       idle:   makeAnim('jungleWarrior', 'idle',   126, 126, 3, 3, 8),
       walk:   makeAnim('jungleWarrior', 'run',    126, 126, 8, 8, 10),
-      attack: makeAnim('jungleWarrior', 'attack', 126, 126, 9, 9, 12, 2),
+      attack: [
+        makeAnim('jungleWarrior', 'attack', 126, 126, 9, 9, 12, 2),
+        makeAnim('jungleWarrior', 'attack1', 126, 126, 7, 7, 12, 2),
+        makeAnim('jungleWarrior', 'attack2', 126, 126, 6, 6, 12, 2),
+      ],
       hit:    makeAnim('jungleWarrior', 'hit',    126, 126, 3, 3, 10, 2),
       dead:   makeAnim('jungleWarrior', 'dead',   126, 126, 11, 11, 8, 2, false),
     },
@@ -242,7 +259,11 @@ export const HERO_CATALOG: HeroCatalog = {
     animations: {
       idle:   makeAnim('huntress', 'idle',   150, 150, 8, 8, 8),
       walk:   makeAnim('huntress', 'run',    150, 150, 8, 8, 10),
-      attack: makeAnim('huntress', 'attack', 150, 150, 5, 5, 12, 2),
+      attack: [
+        makeAnim('huntress', 'attack', 150, 150, 5, 5, 12, 2),
+        makeAnim('huntress', 'attack1', 150, 150, 5, 5, 12, 2),
+        makeAnim('huntress', 'attack2', 150, 150, 5, 5, 12, 2)
+      ],
       hit:    makeAnim('huntress', 'hit',    150, 150, 3, 3, 10, 2),
       dead:   makeAnim('huntress', 'dead',   150, 150, 8, 8, 8, 2, false),
     },
@@ -260,7 +281,10 @@ export const HERO_CATALOG: HeroCatalog = {
     animations: {
       idle:   makeAnim('strongSamurai', 'idle',   200, 200, 8, 8, 8),
       walk:   makeAnim('strongSamurai', 'run',    200, 200, 8, 8, 10),
-      attack: makeAnim('strongSamurai', 'attack', 200, 200, 6, 6, 12, 2),
+      attack: [
+        makeAnim('strongSamurai', 'attack', 200, 200, 6, 6, 12, 2),
+        makeAnim('strongSamurai', 'attack1',200, 200, 6, 6, 12, 2)
+      ],
       hit:    makeAnim('strongSamurai', 'hit',    200, 200, 4, 4, 10, 2),
       dead:   makeAnim('strongSamurai', 'dead',   200, 200, 6, 6, 8, 2, false),
     },
@@ -278,7 +302,11 @@ export const HERO_CATALOG: HeroCatalog = {
     animations: {
       idle:   makeAnim('skeleton', 'idle',   150, 150, 4, 4, 8),
       walk:   makeAnim('skeleton', 'run',    150, 150, 4, 4, 10),
-      attack: makeAnim('skeleton', 'attack', 150, 150, 8, 8, 12, 2),
+      attack: [
+        makeAnim('skeleton', 'attack', 150, 150, 8, 8, 12, 2),
+        makeAnim('skeleton', 'attack1', 150, 150, 8, 8, 12, 2),
+        makeAnim('skeleton', 'attack2', 150, 150, 6, 6, 12, 2),
+      ],
       hit:    makeAnim('skeleton', 'hit',    150, 150, 4, 4, 10, 2),
       dead:   makeAnim('skeleton', 'dead',   150, 150, 4, 4, 8, 2, false),
     },
@@ -296,7 +324,11 @@ export const HERO_CATALOG: HeroCatalog = {
     animations: {
       idle:   makeAnim('goblin', 'idle',   150, 150, 4, 4, 8),
       walk:   makeAnim('goblin', 'run',    150, 150, 8, 8, 10),
-      attack: makeAnim('goblin', 'attack', 150, 150, 8, 8, 12, 2),
+      attack: [
+        makeAnim('goblin', 'attack', 150, 150, 8, 8, 12, 2),
+        makeAnim('goblin', 'attack1',150, 150, 8, 8, 12, 2),
+        makeAnim('goblin', 'attack2',150, 150, 12, 12, 12, 2),
+      ],
       hit:    makeAnim('goblin', 'hit',    150, 150, 4, 4, 10, 2),
       dead:   makeAnim('goblin', 'dead',   150, 150, 4, 4, 8, 2, false),
     },
@@ -314,12 +346,15 @@ export const HERO_CATALOG: HeroCatalog = {
     animations: {
       idle:   makeAnim('mushroom', 'idle',   150, 150, 4, 4, 8),
       walk:   makeAnim('mushroom', 'run',    150, 150, 8, 8, 10),
-      attack: makeAnim('mushroom', 'attack', 150, 150, 8, 8, 12, 2),
+      attack: [
+        makeAnim('mushroom', 'attack', 150, 150, 8, 8, 12, 2),
+        makeAnim('mushroom', 'attack1',150, 150, 8, 8, 12, 2),
+        makeAnim('mushroom', 'attack2',150, 150, 11, 11, 12, 2),
+      ],
       hit:    makeAnim('mushroom', 'hit',    150, 150, 4, 4, 10, 2),
       dead:   makeAnim('mushroom', 'dead',   150, 150, 4, 4, 8, 2, false),
     },
   },
 };
 
-// Optional: strong typed key type
 export type HeroId = keyof typeof HERO_CATALOG;

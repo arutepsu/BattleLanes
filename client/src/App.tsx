@@ -10,7 +10,7 @@ import type {
 } from "./types/game";
 import { fetchHeroes, createMatch, spawnUnit, stepMatch } from "./types/gameApi";
 import "./App.css";
-import { DeadSprite, SpriteAnimator } from "./components/SpriteAnimator";
+import { AttackComboAnimator, DeadSprite, SpriteAnimator } from "./components/SpriteAnimator";
 
 const LANES: LaneId[] = [0, 1, 2];
 
@@ -23,10 +23,8 @@ export default function App() {
 
   const [isRunning, setIsRunning] = useState(true);
 
-  // 👇 NEW: which player is currently spawning units
   const [activeSide, setActiveSide] = useState<PlayerSide>("left");
 
-  // Load heroes + create match on mount
   useEffect(() => {
     (async () => {
       try {
@@ -53,8 +51,7 @@ export default function App() {
       if (cancelled) return;
       try {
         const { state /*, events */ } = await stepMatch(matchId, TICK_MS);
-        setMatch({ ...state });
-        // later: handle events for attack/hit/dead animations
+        setMatch({ ...state });s
       } catch (err) {
         console.error(err);
       }
@@ -73,7 +70,6 @@ export default function App() {
     async (lane: LaneId) => {
       if (!matchId || !selectedHeroId) return;
       try {
-        // 👇 use activeSide instead of always LEFT
         const res = await spawnUnit(matchId, activeSide, lane, selectedHeroId);
         setMatch(res.state);
       } catch (err) {
@@ -105,8 +101,6 @@ export default function App() {
         <TowerBar match={match} side="right" />
         <ManaBar match={match} side="right" />
       </div>
-
-      {/* 👇 NEW: side selector for spawns */}
       <SpawnSideToggle activeSide={activeSide} onChange={setActiveSide} />
 
       <HeroBar
@@ -235,15 +229,12 @@ function GameBoard({
 }) {
   return (
     <div className="board">
-      {LANES.map((lane) => (
-        <LaneView
-          key={lane}
-          lane={lane}
-          match={match}
-          heroCatalog={heroCatalog}
-          onClick={() => onLaneClick(lane)}
-        />
-      ))}
+      <LaneView
+        lane={0}
+        match={match}
+        heroCatalog={heroCatalog}
+        onClick={() => onLaneClick(0)}
+      />
     </div>
   );
 }
@@ -292,6 +283,7 @@ function LaneView({
 }
 
 
+
 function UnitView({
   unit,
   heroCatalog,
@@ -312,67 +304,56 @@ function UnitView({
   const xPercent = unit.x * 100;
   const hpRatio = unit.maxHp > 0 ? unit.hp / unit.maxHp : 0;
 
-  // 🔥 DEAD: use DeadSprite (static last frame)
   if (animState === "dead") {
-    const deadCandidate = a.dead ?? a.idle ?? a.walk;
-    const deadAnim = toSingleAnim(deadCandidate);
-    if (!deadAnim) {
-      console.warn("UnitView: no dead animation for", unit.heroId);
-      return null;
-    }
-
-    console.log("DEAD anim config for", unit.heroId, {
-      src: deadAnim.spriteSheetSrc,
-      totalFrames: deadAnim.totalFrames,
-      startFrame: deadAnim.startFrame,
-      loop: deadAnim.loop,
-    });
+    const deadCfg = toSingleAnim(a.dead ?? a.idle ?? a.walk);
+    if (!deadCfg) return null;
 
     return (
-      <div
-        className="unit"
-        style={{
-          left: `${xPercent}%`,
-        }}
-      >
-        <DeadSprite anim={deadAnim} flip={flip} />
-        <div className="unit-hpbar">
-          <div
-            className="unit-hpfill"
-            style={{ width: `${hpRatio * 100}%` }}
-          />
-        </div>
+      <div className="unit" style={{ left: `${xPercent}%` }}>
+        <DeadSprite anim={deadCfg} flip={flip} />
       </div>
     );
   }
 
-  // ✅ WALK / ATTACK: still use SpriteAnimator
-  let candidate: AnimConfig | AnimConfig[] | undefined;
+
   if (animState === "attack") {
-    candidate = a.attack ?? a.walk ?? a.idle;
-  } else {
-    candidate = a.walk ?? a.idle;
+    const attackCfg = a.attack;
+
+    if (Array.isArray(attackCfg)) {
+      return (
+        <div className="unit" style={{ left: `${xPercent}%` }}>
+          <AttackComboAnimator
+            key={unit.id}
+            anims={attackCfg}
+            flip={flip}
+          />
+          <div className="unit-hpbar">
+            <div className="unit-hpfill" style={{ width: `${hpRatio * 100}%` }} />
+          </div>
+        </div>
+      );
+    } else if (attackCfg) {
+      // single attack sheet
+      return (
+        <div className="unit" style={{ left: `${xPercent}%` }}>
+          <SpriteAnimator anim={attackCfg} flip={flip} />
+          <div className="unit-hpbar">
+            <div className="unit-hpfill" style={{ width: `${hpRatio * 100}%` }} />
+          </div>
+        </div>
+      );
+    }
   }
 
-  const anim = toSingleAnim(candidate);
-  if (!anim) {
-    console.warn("UnitView: no animation found for", unit.heroId, animState);
-    return null;
-  }
+  // WALK / IDLE
+  const walkOrIdle = a.walk ?? a.idle ?? null;
+  if (!walkOrIdle) return null;
 
   return (
-    <div
-      className="unit"
-      style={{
-        left: `${xPercent}%`,
-      }}
-    >
-      <SpriteAnimator anim={anim} flip={flip} />
+    <div className="unit" style={{ left: `${xPercent}%` }}>
+      <SpriteAnimator anim={walkOrIdle} flip={flip} />
       <div className="unit-hpbar">
-        <div
-          className="unit-hpfill"
-          style={{ width: `${hpRatio * 100}%` }}
-        />
+        <div className="unit-hpfill" style={{ width: `${hpRatio * 100}%` }} />
       </div>
     </div>
   );
