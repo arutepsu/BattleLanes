@@ -1,6 +1,3 @@
-# -------------------------------------------------------
-# Node & Package Managers
-# -------------------------------------------------------
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -10,9 +7,6 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-# -------------------------------------------------------
-# Build Output
-# -------------------------------------------------------
 dist/
 build/
 out/
@@ -20,61 +14,64 @@ out/
 .vite/
 vite.config.ts.timestamp*
 
-# -------------------------------------------------------
-# Environment Files
-# -------------------------------------------------------
 .env
 .env.local
 .env.development.local
 .env.production.local
 .env.test.local
 
-# -------------------------------------------------------
-# Logs
-# -------------------------------------------------------
 *.log
 logs/
 *.pid
 *.seed
 *.pid.lock
 
-# -------------------------------------------------------
-# Editor / IDE Stuff
-# -------------------------------------------------------
 .idea/
 .vscode/
 *.swp
 
-# -------------------------------------------------------
-# OS Generated Junk
-# -------------------------------------------------------
 .DS_Store
 Thumbs.db
 
-# -------------------------------------------------------
-# TypeScript Build Output
-# -------------------------------------------------------
 *.tsbuildinfo
 .tsbuildinfo
 
-# -------------------------------------------------------
-# Testing / Coverage
-# -------------------------------------------------------
 coverage/
 .nyc_output/
 jest-cache/
 jest-temp/
 
-# -------------------------------------------------------
-# Temporary files
-# -------------------------------------------------------
 tmp/
 temp/
 cache/
 *.tmp
 *.temp
 
-# -------------------------------------------------------
-# Other
-# -------------------------------------------------------
 *.local
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+server/node_modules
+client/node_modules
+dist
+dist-ssr
+*.local
+
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+
+src/ui/utils
