@@ -1,7 +1,3 @@
-// heroCatalog.ts
-
-// --- Types ---
-
 export type HeroState = 'idle' | 'walk' | 'attack' | 'hit' | 'dead';
 
 export interface AnimConfig {
@@ -17,7 +13,6 @@ export interface AnimConfig {
   backgroundColor: string | null;
 }
 
-// Attack can be one animation or an array of variants
 export interface HeroAnimations {
   idle: AnimConfig;
   walk: AnimConfig;
@@ -41,20 +36,12 @@ export interface HeroDefinition extends HeroCoreStats {
   animations: HeroAnimations;
 }
 
-// If you want stricter typing for keys, you can later refine this to a union.
 export type HeroCatalog = Record<string, HeroDefinition>;
 
-// --- Helpers ---
-
-// helper: build file path
-// helper: build file path for the CLIENT
 function spritePath(heroName: string, stateFile: string): string {
-  // This will be resolved by the browser against the page origin (http://localhost:5173)
   return `/sprites/${heroName}_${stateFile}.png`;
 }
 
-
-// helper: build animation config
 function makeAnim(
   heroName: string,
   stateFile: string,
@@ -80,17 +67,15 @@ function makeAnim(
   };
 }
 
-// --- Catalog ---
-
 export const HERO_CATALOG: HeroCatalog = {
   samurai: {
     type: 'samurai',
     name: 'Samurai',
-    maxHp: 150,
-    attack: 25,
+    maxHp: 170,
+    attack: 26,
     range: 1,
-    speed: 25,
-    cost: 3,
+    speed: 24,
+    cost: 4,
     attackCooldownMs: 900,
     animations: {
       idle:   makeAnim('samurai', 'idle',   200, 200, 4, 4,  8),
@@ -107,12 +92,12 @@ export const HERO_CATALOG: HeroCatalog = {
   warrior: {
     type: 'warrior',
     name: 'Warrior',
-    maxHp: 80,
-    attack: 40,
-    range: 3,
-    speed: 15,
-    cost: 4,
-    attackCooldownMs: 1200,
+    maxHp: 130,
+    attack: 22,
+    range: 1,
+    speed: 18,
+    cost: 3,
+    attackCooldownMs: 1100,
     animations: {
       idle:   makeAnim('warrior', 'idle',   162, 162, 10, 10, 8),
       walk:   makeAnim('warrior', 'run',    162, 162, 8, 8, 10),
@@ -129,12 +114,12 @@ export const HERO_CATALOG: HeroCatalog = {
   wizard: {
     type: 'wizard',
     name: 'Wizard',
-    maxHp: 80,
-    attack: 40,
+    maxHp: 90,
+    attack: 26,
     range: 3,
-    speed: 15,
-    cost: 4,
-    attackCooldownMs: 1200,
+    speed: 17,
+    cost: 3,
+    attackCooldownMs: 1150,
     animations: {
       idle:   makeAnim('wizard', 'idle',   231, 190, 6, 6, 8),
       walk:   makeAnim('wizard', 'run',    231, 190, 8, 8, 10),
@@ -150,11 +135,11 @@ export const HERO_CATALOG: HeroCatalog = {
   knight: {
     type: 'knight',
     name: 'Knight',
-    maxHp: 240,
-    attack: 24,
+    maxHp: 260,
+    attack: 26,
     range: 1,
-    speed: 20,
-    cost: 4,
+    speed: 18,
+    cost: 5,
     attackCooldownMs: 950,
     animations: {
       idle:   makeAnim('knight', 'idle',   180, 180, 11, 11, 8),
@@ -171,11 +156,11 @@ export const HERO_CATALOG: HeroCatalog = {
   evilWizard: {
     type: 'evilWizard',
     name: 'Evil Wizard',
-    maxHp: 100,
-    attack: 35,
+    maxHp: 150,
+    attack: 38,
     range: 3,
     speed: 18,
-    cost: 4,
+    cost: 5,
     attackCooldownMs: 1100,
     animations: {
       idle:   makeAnim('evilWizard', 'idle',   250, 250, 8, 8, 8),
@@ -196,7 +181,7 @@ export const HERO_CATALOG: HeroCatalog = {
     attack: 28,
     range: 1,
     speed: 27,
-    cost: 3,
+    cost: 4,
     attackCooldownMs: 900,
     animations: {
       idle:   makeAnim('jungleWarrior', 'idle',   126, 126, 3, 3, 8),
@@ -214,10 +199,10 @@ export const HERO_CATALOG: HeroCatalog = {
   knight2: {
     type: 'knight2',
     name: 'Knight 2',
-    maxHp: 220,
+    maxHp: 150,
     attack: 20,
     range: 1,
-    speed: 22,
+    speed: 20,
     cost: 3,
     attackCooldownMs: 1000,
     animations: {
@@ -232,9 +217,9 @@ export const HERO_CATALOG: HeroCatalog = {
   bossWizard: {
     type: 'bossWizard',
     name: 'Boss Wizard',
-    maxHp: 300,
-    attack: 45,
-    range: 4,
+    maxHp: 320,
+    attack: 80,
+    range: 3,
     speed: 16,
     cost: 6,
     attackCooldownMs: 1200,
@@ -250,12 +235,12 @@ export const HERO_CATALOG: HeroCatalog = {
   huntress: {
     type: 'huntress',
     name: 'Huntress',
-    maxHp: 120,
-    attack: 26,
-    range: 4,
+    maxHp: 130,
+    attack: 30,
+    range: 2,
     speed: 28,
-    cost: 3,
-    attackCooldownMs: 850,
+    cost: 4,
+    attackCooldownMs: 900,
     animations: {
       idle:   makeAnim('huntress', 'idle',   150, 150, 8, 8, 8),
       walk:   makeAnim('huntress', 'run',    150, 150, 8, 8, 10),
@@ -272,11 +257,11 @@ export const HERO_CATALOG: HeroCatalog = {
   strongSamurai: {
     type: 'strongSamurai',
     name: 'Strong Samurai',
-    maxHp: 200,
-    attack: 32,
+    maxHp: 230,
+    attack: 34,
     range: 1,
     speed: 23,
-    cost: 4,
+    cost: 5,
     attackCooldownMs: 900,
     animations: {
       idle:   makeAnim('strongSamurai', 'idle',   200, 200, 8, 8, 8),
@@ -293,7 +278,7 @@ export const HERO_CATALOG: HeroCatalog = {
   skeleton: {
     type: 'skeleton',
     name: 'Skeleton',
-    maxHp: 90,
+    maxHp: 100,
     attack: 18,
     range: 1,
     speed: 22,
@@ -315,12 +300,12 @@ export const HERO_CATALOG: HeroCatalog = {
   goblin: {
     type: 'goblin',
     name: 'Goblin',
-    maxHp: 70,
-    attack: 16,
+    maxHp: 60,
+    attack: 12,
     range: 1,
-    speed: 30,
+    speed: 32,
     cost: 1,
-    attackCooldownMs: 800,
+    attackCooldownMs: 850,
     animations: {
       idle:   makeAnim('goblin', 'idle',   150, 150, 4, 4, 8),
       walk:   makeAnim('goblin', 'run',    150, 150, 8, 8, 10),
@@ -337,12 +322,12 @@ export const HERO_CATALOG: HeroCatalog = {
   mushroom: {
     type: 'mushroom',
     name: 'Mushroom',
-    maxHp: 100,
+    maxHp: 90,
     attack: 14,
     range: 1,
     speed: 18,
     cost: 2,
-    attackCooldownMs: 900,
+    attackCooldownMs: 950,
     animations: {
       idle:   makeAnim('mushroom', 'idle',   150, 150, 4, 4, 8),
       walk:   makeAnim('mushroom', 'run',    150, 150, 8, 8, 10),
@@ -353,6 +338,64 @@ export const HERO_CATALOG: HeroCatalog = {
       ],
       hit:    makeAnim('mushroom', 'hit',    150, 150, 4, 4, 10, 2),
       dead:   makeAnim('mushroom', 'dead',   150, 150, 4, 4, 8, 2, false),
+    },
+  },
+  taurus:{
+    type: 'taurus',
+    name: 'Taurus',
+    maxHp: 2000,
+    attack: 100,
+    range: 5,
+    speed: 5,
+    cost: 8,
+    attackCooldownMs: 1500,
+    animations: {
+      idle:   makeAnim('taurus', 'idle',   900, 500, 18, 18, 8),
+      walk:   makeAnim('taurus', 'run',    900, 500, 16, 16, 10),
+      attack: [
+        makeAnim('taurus', 'attack', 900, 500, 13, 13, 12, 2),
+        makeAnim('taurus', 'attack1',900, 500, 17, 17, 12, 2)
+      ],
+      hit:    makeAnim('taurus', 'hit',    900, 500, 4, 4, 10, 2),
+      dead:   makeAnim('taurus', 'dead',   900, 500, 18, 18, 8, 2, false),
+    },
+  },
+  fireWizard:{
+    type: 'fireWizard',
+    name: 'Fire Wizard',
+    maxHp: 160,
+    attack: 45,
+    range: 3, 
+    speed: 20,
+    cost: 5,
+    attackCooldownMs: 1000,
+    animations: {
+      idle:   makeAnim('fireWizard', 'idle',   150, 150, 8, 8, 8),
+      walk:   makeAnim('fireWizard', 'run',    150, 150, 8, 8, 10),
+      attack: [
+        makeAnim('fireWizard', 'attack', 150, 150, 8, 8, 10, 2),
+      ],
+      hit:    makeAnim('fireWizard', 'hit',    150, 150, 4, 4, 10, 2),
+      dead:   makeAnim('fireWizard', 'dead',   150, 150, 5, 5, 8, 2, false),
+    },
+  },
+  worm: {
+    type: 'worm',
+    name: 'Worm',
+    maxHp: 220,
+    attack: 28,
+    range: 2,
+    speed: 12,
+    cost: 4,
+    attackCooldownMs: 1100,
+    animations: {
+      idle:   makeAnim('worm', 'idle',   90, 90, 6, 6, 8),
+      walk:   makeAnim('worm', 'run',    90, 90, 9, 9, 10),
+      attack: [
+        makeAnim('worm', 'attack', 90, 90, 16, 16, 12, 2),
+      ],
+      hit:    makeAnim('worm', 'hit',    90, 90, 3, 3, 10, 2),
+      dead:   makeAnim('worm', 'dead',   90, 90, 9, 9, 8, 2, false),
     },
   },
 };

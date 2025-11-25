@@ -15,19 +15,18 @@ export interface UnitState {
   heroId: HeroId;
   side: PlayerSide;
   lane: LaneId;
-  x: number; // 0..1 along lane
+  x: number;
 
   hp: number;
   maxHp: number;
 
-  // combat stats (copied from hero on spawn or derived)
   attack: number;
-  range: number;             // in lane units (0..1 space)
-  speed: number;             // units per second along the lane
+  range: number;
+  speed: number;
   attackCooldownMs: number;
-  lastAttackAt: number;      // timestamp in ms (game time / Date.now)
+  lastAttackAt: number;
 
-  phase: UnitPhase;          // what the unit is doing right now
+  phase: UnitPhase;
 }
 
 export interface PlayerState {
@@ -44,7 +43,7 @@ export interface UnitState {
   heroId: HeroId;
   side: PlayerSide;
   lane: LaneId;
-  x: number;            // 0..1 along lane
+  x: number;
   hp: number;
   maxHp: number;
   attack: number;
@@ -63,8 +62,6 @@ export interface MatchState {
   isFinished: boolean;
   winnerSide?: PlayerSide;
 }
-
-// ---- Events from /step ----
 
 export type GameEvent =
   | {
@@ -103,8 +100,6 @@ export interface StepResult {
   state: MatchState;
   events: GameEvent[];
 }
-
-// ---- Heroes from /heroes ----
 
 export interface AnimConfig {
   spriteSheetSrc: string;
