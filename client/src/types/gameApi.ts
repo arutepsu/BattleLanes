@@ -7,8 +7,6 @@ import type{
   HeroId,
 } from "../types/game";
 
-// IMPORTANT: Vite dev server runs on port 5173 by default
-// Fastify runs on port 3000
 const BASE_URL = "http://localhost:3000";
 
 async function getJson<T>(url: string, options?: RequestInit): Promise<T> {
