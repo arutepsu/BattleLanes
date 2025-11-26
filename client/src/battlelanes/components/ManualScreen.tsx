@@ -1,40 +1,31 @@
-// src/game/components/GameScreen.tsx
 import type {
   HeroCatalog,
   HeroId,
   MatchState,
   PlayerSide,
-  LaneId,
 } from "../../types/game";
-import { ControlsPanel } from "./ControlsPanel";
 import { HeroPicker } from "./HeroPicker";
-import { LanesView } from "./LanesView";
+import PlayableHero from "../hero/PlayableHero";
 
-type GameScreenProps = {
+type ManualScreenProps = {
   heroCatalog: HeroCatalog;
   match: MatchState;
   selectedHeroId: HeroId | null;
   onSelectHero: (id: HeroId) => void;
-  activeSide: PlayerSide;
-  onChangeActiveSide: (side: PlayerSide) => void;
-  isRunning: boolean;
-  onToggleRunning: () => void;
-  onLaneClick: (lane: LaneId) => void;
 };
 
-export function GameScreen({
+export function ManualScreen({
   heroCatalog,
   match,
   selectedHeroId,
   onSelectHero,
-  activeSide,
-  onChangeActiveSide,
-  isRunning,
-  onToggleRunning,
-  onLaneClick,
-}: GameScreenProps) {
+}: ManualScreenProps) {
+  const selectedHero =
+    selectedHeroId != null ? heroCatalog[selectedHeroId] : null;
+
   return (
     <>
+      {/* same top HUD bar as GameScreen */}
       <div className="top-bar">
         <ManaBar match={match} side="left" />
         <TowerBar match={match} side="left" />
@@ -42,24 +33,42 @@ export function GameScreen({
         <ManaBar match={match} side="right" />
       </div>
 
-      <ControlsPanel
-        activeSide={activeSide}
-        onChangeActiveSide={onChangeActiveSide}
-        isRunning={isRunning}
-        onToggleRunning={onToggleRunning}
-      />
-
+      {/* reuse the same hero picker */}
       <HeroPicker
         heroCatalog={heroCatalog}
         selectedHeroId={selectedHeroId}
         onSelectHero={onSelectHero}
       />
 
-      <LanesView
-        match={match}
-        heroCatalog={heroCatalog}
-        onLaneClick={onLaneClick}
-      />
+      {/* manual playground area */}
+      <div className="manual-playground">
+        {selectedHero ? (
+          <>
+            <PlayableHero
+              hero={selectedHero}
+              side="left"
+              lane={1}
+              initialX={300}
+              onAttackStart={() => {
+                console.log("Manual hero ATTACK start");
+              }}
+              onAttackEnd={() => {
+                console.log("Manual hero ATTACK end");
+              }}
+            />
+            <div className="manual-help">
+              <p>
+                Controls: <strong>A</strong> / <strong>D</strong> to move,{" "}
+                <strong>Left Mouse</strong> to attack.
+              </p>
+            </div>
+          </>
+        ) : (
+          <div className="manual-help">
+            <p>Select a hero above to spawn and control it.</p>
+          </div>
+        )}
+      </div>
     </>
   );
 }

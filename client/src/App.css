@@ -136,3 +136,19 @@ body {
   background: #76ff03;
 }
 
+.mode-toggle {
+  margin-bottom: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.mode-toggle button {
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.mode-toggle button.active {
+  background: #444;
+  color: #fff;
+  border-radius: 4px;
+}
