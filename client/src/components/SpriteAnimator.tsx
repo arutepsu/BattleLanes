@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { AnimConfig } from "../types/game";
 
 interface SpriteAnimatorProps {
@@ -25,6 +25,8 @@ export function SpriteAnimator({
     if (!context) return;
     const ctx: CanvasRenderingContext2D = context;
 
+    ctx.imageSmoothingEnabled = false;
+
     const sprite = new Image();
     sprite.src = anim.spriteSheetSrc;
 
@@ -39,7 +41,7 @@ export function SpriteAnimator({
     const frameDuration = 1000 / fps;
     const scale = anim.scale || 1;
     const loop = anim.loop ?? true;
-    const backgroundColor = anim.backgroundColor;
+    const backgroundColor = anim.backgroundColor || null;
 
     const dw = frameWidth * scale;
     const dh = frameHeight * scale;
@@ -129,7 +131,7 @@ export function SpriteAnimator({
         cancelAnimationFrame(rafId);
       }
     };
-  }, [anim, flip]);
+  }, [anim, flip, playing, onComplete]);
 
   return <canvas ref={canvasRef} />;
 }
