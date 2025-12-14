@@ -25,12 +25,10 @@ export interface UnitState {
   side: PlayerSide;
   lane: LaneId;
 
-  x: number;              // 0..1 along lane
+  x: number;
 
   hp: number;
   maxHp: number;
-
-  // Combat stats (copied from hero definition)
   attack: number;
   range: number;
   speed: number;
@@ -38,7 +36,6 @@ export interface UnitState {
   attackCooldownMs: number;
   lastAttackAt: number;
 
-  // NEW FIELD — REQUIRED!
   phase: UnitPhase;
 }
 
@@ -52,8 +49,6 @@ export interface MatchState {
   isFinished: boolean;
   winnerSide?: PlayerSide;
 }
-
-// ---- Events for sexy UI ----
 
 export type GameEvent =
   | {
@@ -88,7 +83,7 @@ export type GameEvent =
       winnerSide: PlayerSide;
     };
 
-// What stepMatch will return:
+
 export interface StepResult {
   state: MatchState;
   events: GameEvent[];

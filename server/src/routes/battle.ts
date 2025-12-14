@@ -2,7 +2,6 @@ import { FastifyInstance } from "fastify";
 
 export default async function (app: FastifyInstance) {
 
-  // POST /battle/start
   app.post("/start", async (req, reply) => {
     return {
       matchId: crypto.randomUUID(),
@@ -10,7 +9,6 @@ export default async function (app: FastifyInstance) {
     };
   });
 
-  // POST /battle/action
   app.post("/action", async (req: any) => {
     const { matchId, action, hero } = req.body;
 
